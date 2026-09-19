@@ -1,0 +1,6 @@
+{
+  "name": "Biên bản kiểm tra PCCC&CNCH",
+  "description": "Ứng dụng lập, quản lý, chỉnh sửa và xuất biên bản tự kiểm tra PCCC&CNCH hàng tháng (Mẫu PC02) sang Word và PDF - Công ty Thủy điện Ialy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
