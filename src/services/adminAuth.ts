@@ -101,21 +101,24 @@ class AdminAuthService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ oldPin: cleanedOld, newPin: cleanedNew }),
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        this.cachedPin = cleanedNew;
-        const nowIso = new Date().toISOString();
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(PIN_STORAGE_KEY, cleanedNew);
-          localStorage.setItem(PIN_UPDATED_AT_KEY, nowIso);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          this.cachedPin = cleanedNew;
+          const nowIso = new Date().toISOString();
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(PIN_STORAGE_KEY, cleanedNew);
+            localStorage.setItem(PIN_UPDATED_AT_KEY, nowIso);
+          }
+          this.pinCallbacks.forEach((cb) => cb(cleanedNew));
+          return {
+            success: true,
+            message: 'Đã đổi mã PIN Admin thành công và đồng bộ tới tất cả máy tính!',
+          };
+        } else if (data && data.message) {
+          return { success: false, message: data.message };
         }
-        this.pinCallbacks.forEach((cb) => cb(cleanedNew));
-        return {
-          success: true,
-          message: 'Đã đổi mã PIN Admin thành công và đồng bộ tới tất cả máy tính!',
-        };
-      } else if (data && data.message) {
-        return { success: false, message: data.message };
       }
     } catch (apiErr) {
       console.warn('Server /api/admin/pin unavailable, using cloud endpoints fallback', apiErr);
@@ -185,7 +188,8 @@ class AdminAuthService {
         const serverRes = await fetch(getApiUrl(`/api/admin/pin?_t=${Date.now()}`), {
           cache: 'no-store',
         });
-        if (serverRes.ok) {
+        const contentType = serverRes.headers.get('content-type') || '';
+        if (serverRes.ok && contentType.includes('application/json')) {
           const json = await serverRes.json();
           if (json && json.success && json.pin && typeof json.pin === 'string' && json.pin.trim().length >= 4) {
             const remotePin = json.pin.trim();

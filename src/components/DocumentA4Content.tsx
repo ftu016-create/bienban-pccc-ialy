@@ -362,13 +362,13 @@ export const DocumentA4Content: React.FC<DocumentA4ContentProps> = ({
           </div>
 
           {/* Image Attachments (4 images per page) */}
-          {report.attachments.filter((a) => a.fileType === 'image').length > 0 && (
+          {(report.attachments || []).filter((a) => a.fileType === 'image').length > 0 && (
             <div className="mb-8">
               <div className="font-bold text-[12.5pt] mb-4 text-[#17365d] border-b pb-1">
                 PHỤ LỤC 1: HÌNH ẢNH THỰC TẾ CÔNG TÁC PCCC&CNCH TẠI HIỆN TRƯỜNG
               </div>
               <div className="grid grid-cols-2 gap-4">
-                {report.attachments
+                {(report.attachments || [])
                   .filter((a) => a.fileType === 'image')
                   .map((imgAtt, idx) => {
                     const src = attachmentService.getAttachmentViewUrl(imgAtt);
@@ -398,7 +398,7 @@ export const DocumentA4Content: React.FC<DocumentA4ContentProps> = ({
           )}
 
           {/* Phụ lục 2: A4 Landscape, Thụt đầu dòng, Lề: Trái 3cm, Trên/Dưới/Phải 2cm */}
-          {report.attachments.filter((a) => a.fileType === 'pdf').length > 0 && (
+          {(report.attachments || []).filter((a) => a.fileType === 'pdf').length > 0 && (
             <div className="mt-8 pt-6 border-t-2 border-dashed border-slate-300 print:break-before-page">
               <div className="bg-white border border-slate-300 rounded-lg p-6 sm:p-8 shadow-xs">
                 <div
@@ -416,7 +416,7 @@ export const DocumentA4Content: React.FC<DocumentA4ContentProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {report.attachments
+                    {(report.attachments || [])
                       .filter((a) => a.fileType === 'pdf')
                       .map((pdfAtt, pIdx) => (
                         <tr key={pdfAtt.id}>

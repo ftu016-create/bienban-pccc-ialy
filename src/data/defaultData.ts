@@ -122,6 +122,9 @@ export function createNewReport(override?: Partial<ReportData>): ReportData {
     signer_role: 'PHÓ QUẢN ĐỐC',
     manager: 'Nguyễn Hoàng Phi',
 
+    status: 'draft',
+    attachments: [],
+
     created_at: now.toISOString(),
     updated_at: now.toISOString(),
     ...override,

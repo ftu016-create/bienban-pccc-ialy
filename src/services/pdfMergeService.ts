@@ -1,17 +1,28 @@
 import { PDFDocument } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist';
 import { AttachmentItem } from '../types';
 import { attachmentService } from './attachmentService';
 
-// Configure pdfjs worker: Prefer local bundled worker from pdfjs-dist with CDN fallback
-if (typeof window !== 'undefined') {
+let pdfjsInstance: any = null;
+
+async function getPdfJs(): Promise<any> {
+  if (pdfjsInstance) return pdfjsInstance;
   try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.mjs',
-      import.meta.url
-    ).toString();
-  } catch {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '6.3.289'}/pdf.worker.min.mjs`;
+    const pdfjs = await import('pdfjs-dist');
+    if (typeof window !== 'undefined' && pdfjs?.GlobalWorkerOptions) {
+      try {
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+          'pdfjs-dist/build/pdf.worker.min.mjs',
+          import.meta.url
+        ).toString();
+      } catch {
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version || '6.3.289'}/pdf.worker.min.mjs`;
+      }
+    }
+    pdfjsInstance = pdfjs;
+    return pdfjsInstance;
+  } catch (e) {
+    console.warn('pdfjs-dist could not be loaded dynamically:', e);
+    return null;
   }
 }
 
@@ -74,6 +85,11 @@ export const pdfMergeService = {
     const results: { pageNumber: number; imageBytes: Uint8Array; width: number; height: number }[] = [];
 
     try {
+      const pdfjsLib = await getPdfJs();
+      if (!pdfjsLib) {
+        console.warn('pdfjsLib is not available in this environment');
+        return results;
+      }
       const loadingTask = pdfjsLib.getDocument({
         data: new Uint8Array(pdfArrayBuffer),
         useSystemFonts: true,
