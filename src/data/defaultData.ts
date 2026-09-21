@@ -73,9 +73,9 @@ export const DEFAULT_FIRE: FireSafetyItem[] = [
 
 export const DEFAULT_ESCAPE: EscapeItem[] = [
   { id: 'esc-1', stt: '1', name: 'Việc duy trì giải pháp thoát nạn', status: 'Đảm bảo', note: '' },
-  { id: 'esc-2', stt: '1.1', name: 'Các hành lang, lối thoát nạn', status: 'Đảm bảo', note: 'Hình ảnh minh chứng được lưu tại thư mục dùng chung: HINH ANH KIEM TRA T7' },
-  { id: 'esc-3', stt: '1.2', name: 'Cửa thoát nạn', status: 'Đảm bảo', note: 'Hình ảnh minh chứng được lưu tại thư mục dùng chung: HINH ANH KIEM TRA T7' },
-  { id: 'esc-4', stt: '1.3', name: 'Cầu thang thoát nạn', status: 'Đảm bảo', note: 'Hình ảnh minh chứng được lưu tại thư mục dùng chung: HINH ANH KIEM TRA T7' },
+  { id: 'esc-2', stt: '1.1', name: 'Các hành lang, lối thoát nạn', status: 'Đảm bảo', note: '' },
+  { id: 'esc-3', stt: '1.2', name: 'Cửa thoát nạn', status: 'Đảm bảo', note: '' },
+  { id: 'esc-4', stt: '1.3', name: 'Cầu thang thoát nạn', status: 'Đảm bảo', note: '' },
   { id: 'esc-5', stt: '2', name: 'Việc duy trì giải pháp ngăn cháy, chống cháy lan, chống khói', status: 'Đảm bảo', note: '' },
 ];
 

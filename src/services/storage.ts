@@ -28,7 +28,14 @@ export const storageService = {
       if (res.ok && contentType.includes('application/json')) {
         const json = await res.json();
         if (json.success && Array.isArray(json.reports) && json.reports.length > 0) {
-          const reports = json.reports as ReportData[];
+          const reports = (json.reports as ReportData[]).map((r) => ({
+            ...r,
+            escape: (r.escape || []).map((esc) =>
+              esc.note && esc.note.includes('Hình ảnh minh chứng được lưu tại thư mục dùng chung')
+                ? { ...esc, note: '' }
+                : esc
+            ),
+          }));
           localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
           return reports;
         }
@@ -49,7 +56,7 @@ export const storageService = {
         return [initial];
       }
       const parsed: ReportData[] = JSON.parse(data);
-      // Ensure backward compatibility for fields and clean inspection_areas
+      // Ensure backward compatibility for fields and clean inspection_areas & legacy notes
       return parsed.map((r) => {
         let cleanAreas = r.inspection_areas;
         if (cleanAreas && (cleanAreas.includes('Cửa Nhận Nước') || cleanAreas.includes('Cửa Nhận nước'))) {
@@ -63,9 +70,18 @@ export const storageService = {
               '- NMTĐ Ialy: Gian máy, Gian biến áp, Nhà PK, Trạm 500 kV, Cửa nhận nước.'
             );
         }
+
+        const cleanEscape = (r.escape || []).map((esc) => {
+          if (esc.note && esc.note.includes('Hình ảnh minh chứng được lưu tại thư mục dùng chung')) {
+            return { ...esc, note: '' };
+          }
+          return esc;
+        });
+
         return {
           ...r,
           inspection_areas: cleanAreas,
+          escape: cleanEscape,
           status: r.status || 'draft',
           attachments: r.attachments || [],
         };
