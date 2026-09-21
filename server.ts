@@ -163,6 +163,9 @@ async function startServer() {
   });
 
   // --- API ROUTES ---
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', time: new Date().toISOString() });
+  });
 
   // 1. PIN & AUTH
   app.get('/api/admin/pin', (req, res) => {

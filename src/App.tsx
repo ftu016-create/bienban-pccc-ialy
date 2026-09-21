@@ -47,15 +47,13 @@ export default function App() {
   const [showAdminModal, setShowAdminModal] = useState(false);
 
   // Current active view: 'edit' | 'detail' | 'history'
-  // Guest mode defaults strictly to 'history'
-  const [activeView, setActiveView] = useState<'edit' | 'detail' | 'history'>(() => {
-    return adminAuthService.getRole() === 'admin' ? 'edit' : 'history';
-  });
+  // Default view is 'detail' (Xem bản A4 hoàn chỉnh)
+  const [activeView, setActiveView] = useState<'edit' | 'detail' | 'history'>('detail');
 
   // Strict role guard: Guest / Viewer mode cannot access 'edit' view
   useEffect(() => {
     if (userRole !== 'admin' && activeView === 'edit') {
-      setActiveView('history');
+      setActiveView('detail');
     }
   }, [userRole, activeView]);
 
@@ -225,19 +223,6 @@ export default function App() {
             <nav className="hidden lg:flex items-center bg-black/20 p-1 rounded-xl border border-white/10 text-xs font-semibold">
               <button
                 type="button"
-                onClick={() => setActiveView('history')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition cursor-pointer ${
-                  activeView === 'history'
-                    ? 'bg-white text-[#17365d] shadow-xs font-bold'
-                    : 'text-blue-100 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Lịch sử các kỳ ({reports.length})</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => setActiveView('detail')}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition cursor-pointer ${
                   activeView === 'detail'
@@ -247,6 +232,19 @@ export default function App() {
               >
                 <Eye className="w-3.5 h-3.5" />
                 <span>Xem bản A4 hoàn chỉnh</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveView('history')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition cursor-pointer ${
+                  activeView === 'history'
+                    ? 'bg-white text-[#17365d] shadow-xs font-bold'
+                    : 'text-blue-100 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Lịch sử các kỳ ({reports.length})</span>
               </button>
             </nav>
 
@@ -345,17 +343,6 @@ export default function App() {
           <div className="flex lg:hidden items-center justify-around py-2 border-t border-white/10 text-xs font-semibold">
             <button
               type="button"
-              onClick={() => setActiveView('history')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-lg transition ${
-                activeView === 'history' ? 'bg-white text-[#17365d] font-bold' : 'text-blue-100'
-              }`}
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Lịch sử ({reports.length})</span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => setActiveView('detail')}
               className={`flex items-center gap-1 px-3 py-1 rounded-lg transition ${
                 activeView === 'detail' ? 'bg-white text-[#17365d] font-bold' : 'text-blue-100'
@@ -363,6 +350,17 @@ export default function App() {
             >
               <Eye className="w-3.5 h-3.5" />
               <span>Bản A4</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveView('history')}
+              className={`flex items-center gap-1 px-3 py-1 rounded-lg transition ${
+                activeView === 'history' ? 'bg-white text-[#17365d] font-bold' : 'text-blue-100'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Lịch sử ({reports.length})</span>
             </button>
           </div>
         </div>

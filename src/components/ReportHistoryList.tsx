@@ -41,6 +41,7 @@ export const ReportHistoryList: React.FC<ReportHistoryListProps> = ({
   onDuplicateReport,
   onDeleteReport,
   userRole = 'viewer',
+  onOpenAdminLogin,
   onPrintReport,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -175,8 +176,8 @@ export const ReportHistoryList: React.FC<ReportHistoryListProps> = ({
                       <span>Xem A4</span>
                     </button>
 
-                    {/* Edit button: Admin only */}
-                    {userRole === 'admin' && (
+                    {/* Edit button */}
+                    {userRole === 'admin' ? (
                       <button
                         type="button"
                         onClick={() => onSelectAndEdit(report)}
@@ -186,6 +187,21 @@ export const ReportHistoryList: React.FC<ReportHistoryListProps> = ({
                         <Edit className="w-3.5 h-3.5" />
                         <span>Sửa</span>
                       </button>
+                    ) : (
+                      onOpenAdminLogin && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSelectReport(report);
+                            onOpenAdminLogin();
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg transition cursor-pointer border border-amber-200"
+                          title="Đăng nhập Admin để sửa biên bản này (mặc định: ialy2026)"
+                        >
+                          <Edit className="w-3.5 h-3.5 text-amber-700" />
+                          <span>Sửa</span>
+                        </button>
+                      )
                     )}
 
                     {/* Quick export word */}

@@ -408,46 +408,24 @@ export const DocumentA4Content: React.FC<DocumentA4ContentProps> = ({
                   PHỤ LỤC 2: SỔ THEO DÕI PHƯƠNG TIỆN PCCC, VĂN BẢN & SƠ ĐỒ ĐÍNH KÈM
                 </div>
 
-                <div className="text-[10.5pt] italic text-slate-600 mb-4" style={{ textIndent: '1.27cm' }}>
-                  (Trình bày theo khổ giấy A4 ngang - Căn lề: Trái 3,0 cm; Trên 2,0 cm; Dưới 2,0 cm; Phải 2,0 cm)
-                </div>
-
                 <table className="w-full border-collapse border border-black text-[10.5pt]">
                   <thead>
                     <tr className="bg-slate-100">
                       <th className="border border-black px-2 py-1.5 w-12 text-center">STT</th>
-                      <th className="border border-black px-3 py-1.5 text-left">Tên tài liệu / Văn bản</th>
-                      <th className="border border-black px-3 py-1.5 text-left">Nội dung đính kèm</th>
-                      <th className="border border-black px-2 py-1.5 text-center w-32">Khu vực</th>
+                      <th className="border border-black px-3 py-1.5 text-left">Tên tài liệu / Văn bản PDF đính kèm</th>
                     </tr>
                   </thead>
                   <tbody>
                     {report.attachments
                       .filter((a) => a.fileType === 'pdf')
-                      .map((pdfAtt, pIdx) => {
-                        const cleanDesc =
-                          pdfAtt.description &&
-                          pdfAtt.description.trim().toLowerCase() !== pdfAtt.fileName.trim().toLowerCase() &&
-                          !pdfAtt.fileName.toLowerCase().includes(pdfAtt.description.toLowerCase())
-                            ? pdfAtt.description
-                            : 'Hồ sơ kiểm định an toàn PCCC';
-                        return (
-                          <tr key={pdfAtt.id}>
-                            <td className="border border-black px-2 py-2 text-center">{pIdx + 1}</td>
-                            <td className="border border-black px-3 py-2 font-bold">{pdfAtt.fileName}</td>
-                            <td className="border border-black px-3 py-2">{cleanDesc}</td>
-                            <td className="border border-black px-2 py-2 text-center">
-                              {pdfAtt.plant === 'ialy_mr' ? 'Ialy Mở rộng' : 'Ialy'}
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      .map((pdfAtt, pIdx) => (
+                        <tr key={pdfAtt.id}>
+                          <td className="border border-black px-2 py-2 text-center">{pIdx + 1}</td>
+                          <td className="border border-black px-3 py-2 font-bold">{pdfAtt.fileName}</td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
-
-                <div className="text-[10pt] italic text-slate-500 mt-3" style={{ textIndent: '1.27cm' }}>
-                  * Ghi chú: Các tệp PDF trên được tự động ghép nối trực tiếp vào các trang cuối của tệp PDF này khi xuất báo cáo.
-                </div>
               </div>
             </div>
           )}

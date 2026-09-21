@@ -69,7 +69,7 @@ function readPdfAsDataUrl(file: File): Promise<string> {
 
 export const attachmentService = {
   getAttachmentViewUrl(attachment: AttachmentItem): string {
-    if (attachment.url && (attachment.url.startsWith('/') || attachment.url.startsWith('data:') || attachment.url.startsWith('blob:'))) {
+    if (attachment.url && (attachment.url.startsWith('/') || attachment.url.startsWith('data:') || attachment.url.startsWith('blob:') || attachment.url.startsWith('http'))) {
       return attachment.url;
     }
     return `/api/reports/${attachment.reportId}/attachments/${attachment.id}`;
@@ -255,12 +255,48 @@ export const attachmentService = {
 
   async fetchFileAsArrayBuffer(fileUrl: string): Promise<ArrayBuffer | null> {
     try {
-      const url = fileUrl.startsWith('http') || fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
+      if (!fileUrl) return null;
+
+      // Directly decode Data URLs without HTTP fetch
+      if (fileUrl.startsWith('data:')) {
+        const commaIdx = fileUrl.indexOf(',');
+        if (commaIdx !== -1) {
+          const meta = fileUrl.substring(0, commaIdx);
+          const rawData = fileUrl.substring(commaIdx + 1);
+          if (meta.includes(';base64')) {
+            const binaryString = atob(rawData);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+          } else {
+            const decoded = decodeURIComponent(rawData);
+            const len = decoded.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+              bytes[i] = decoded.charCodeAt(i);
+            }
+            return bytes.buffer;
+          }
+        }
+      }
+
+      // Handle Blob URLs or full http/https URLs
+      if (fileUrl.startsWith('blob:') || fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+        const res = await fetch(fileUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.arrayBuffer();
+      }
+
+      // Relative server path
+      const url = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.arrayBuffer();
     } catch (err) {
-      console.error(`Failed to fetch file from ${fileUrl}:`, err);
+      console.error(`Failed to fetch file from ${fileUrl ? fileUrl.substring(0, 50) : ''}:`, err);
       return null;
     }
   },

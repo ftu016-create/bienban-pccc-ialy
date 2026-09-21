@@ -934,25 +934,13 @@ export async function exportReportToDocx(report: ReportData) {
     appendix2Children.push(
       new Paragraph({
         indent: { firstLine: INDENT_FIRST_LINE },
-        spacing: { before: 140, after: 60 },
+        spacing: { before: 140, after: 120 },
         children: [
           new TextRun({
             text: 'PHỤ LỤC 2: SỔ THEO DÕI VĂN BẢN, PHƯƠNG TIỆN PCCC & SƠ ĐỒ ĐÍNH KÈM',
             bold: true,
             font: FONT_NAME,
             size: SIZE_MAIN,
-          }),
-        ],
-      }),
-      new Paragraph({
-        indent: { firstLine: INDENT_FIRST_LINE },
-        spacing: { before: 0, after: 120 },
-        children: [
-          new TextRun({
-            text: '(Trình bày theo khổ giấy A4 ngang - Căn lề: Trái 3,0 cm; Trên 2,0 cm; Dưới 2,0 cm; Phải 2,0 cm)',
-            italics: true,
-            font: FONT_NAME,
-            size: SIZE_SUB,
           }),
         ],
       })
@@ -963,7 +951,7 @@ export async function exportReportToDocx(report: ReportData) {
         tableHeader: true,
         children: [
           new TableCell({
-            width: { size: 800, type: WidthType.DXA },
+            width: { size: 1000, type: WidthType.DXA },
             borders: cellAllBorders,
             children: [
               new Paragraph({
@@ -973,32 +961,12 @@ export async function exportReportToDocx(report: ReportData) {
             ],
           }),
           new TableCell({
-            width: { size: 5000, type: WidthType.DXA },
+            width: { size: 12993, type: WidthType.DXA },
             borders: cellAllBorders,
             children: [
               new Paragraph({
                 alignment: AlignmentType.LEFT,
-                children: [new TextRun({ text: 'Tên tài liệu / Văn bản PDF', bold: true, font: FONT_NAME, size: SIZE_SUB })],
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: 5500, type: WidthType.DXA },
-            borders: cellAllBorders,
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.LEFT,
-                children: [new TextRun({ text: 'Nội dung đính kèm', bold: true, font: FONT_NAME, size: SIZE_SUB })],
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: 2693, type: WidthType.DXA },
-            borders: cellAllBorders,
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: 'Khu vực', bold: true, font: FONT_NAME, size: SIZE_SUB })],
+                children: [new TextRun({ text: 'Tên tài liệu / Văn bản PDF đính kèm', bold: true, font: FONT_NAME, size: SIZE_SUB })],
               }),
             ],
           }),
@@ -1008,18 +976,12 @@ export async function exportReportToDocx(report: ReportData) {
 
     for (let pIdx = 0; pIdx < pdfAttachments.length; pIdx++) {
       const pdfAtt = pdfAttachments[pIdx];
-      const cleanDesc =
-        pdfAtt.description &&
-        pdfAtt.description.trim().toLowerCase() !== pdfAtt.fileName.trim().toLowerCase() &&
-        !pdfAtt.fileName.toLowerCase().includes(pdfAtt.description.toLowerCase())
-          ? pdfAtt.description
-          : 'Hồ sơ kiểm định an toàn PCCC';
 
       docTableRows.push(
         new TableRow({
           children: [
             new TableCell({
-              width: { size: 800, type: WidthType.DXA },
+              width: { size: 1000, type: WidthType.DXA },
               borders: cellAllBorders,
               children: [
                 new Paragraph({
@@ -1029,36 +991,11 @@ export async function exportReportToDocx(report: ReportData) {
               ],
             }),
             new TableCell({
-              width: { size: 5000, type: WidthType.DXA },
+              width: { size: 12993, type: WidthType.DXA },
               borders: cellAllBorders,
               children: [
                 new Paragraph({
                   children: [new TextRun({ text: pdfAtt.fileName, bold: true, font: FONT_NAME, size: SIZE_SUB })],
-                }),
-              ],
-            }),
-            new TableCell({
-              width: { size: 5500, type: WidthType.DXA },
-              borders: cellAllBorders,
-              children: [
-                new Paragraph({
-                  children: [new TextRun({ text: cleanDesc, font: FONT_NAME, size: SIZE_SUB })],
-                }),
-              ],
-            }),
-            new TableCell({
-              width: { size: 2693, type: WidthType.DXA },
-              borders: cellAllBorders,
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [
-                    new TextRun({
-                      text: pdfAtt.plant === 'ialy_mr' ? 'Ialy Mở rộng' : 'Ialy',
-                      font: FONT_NAME,
-                      size: SIZE_SUB,
-                    }),
-                  ],
                 }),
               ],
             }),
@@ -1079,18 +1016,6 @@ export async function exportReportToDocx(report: ReportData) {
           insideVertical: borderThin,
         },
         rows: docTableRows,
-      }),
-      new Paragraph({
-        indent: { firstLine: INDENT_FIRST_LINE },
-        spacing: { before: 80, after: 120 },
-        children: [
-          new TextRun({
-            text: '* Ghi chú: Chi tiết từng trang của các tài liệu trên được trích xuất và hiển thị vừa vặn theo khổ giấy A4 nằm ngang dưới đây:',
-            italics: true,
-            font: FONT_NAME,
-            size: SIZE_SUB,
-          }),
-        ],
       })
     );
 
@@ -1120,27 +1045,51 @@ export async function exportReportToDocx(report: ReportData) {
 
         try {
           const pages = await pdfMergeService.renderPdfPagesToImages(pdfBuffer);
-          for (const page of pages) {
-            const targetWidth = 660;
-            const scaledHeight = Math.min(460, Math.round(targetWidth * (page.height / page.width)));
+          if (pages && pages.length > 0) {
+            for (let i = 0; i < pages.length; i++) {
+              const page = pages[i];
+              // Scale to fit landscape page nicely: printable area max width 800px, max height 500px
+              const maxWidth = 800;
+              const maxHeight = 500;
+              const scale = Math.min(maxWidth / page.width, maxHeight / page.height);
+              const targetWidth = Math.max(200, Math.round(page.width * scale));
+              const targetHeight = Math.max(200, Math.round(page.height * scale));
+
+              appendix2Children.push(
+                new Paragraph({
+                  pageBreakBefore: i > 0,
+                  alignment: AlignmentType.CENTER,
+                  spacing: { before: 30, after: 20 },
+                  children: [
+                    new ImageRun({
+                      data: page.imageBytes,
+                      transformation: { width: targetWidth, height: targetHeight },
+                      type: 'png',
+                    }),
+                  ],
+                }),
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  spacing: { before: 10, after: 40 },
+                  children: [
+                    new TextRun({
+                      text: `Trang ${page.pageNumber} / ${pages.length} - ${pdfAtt.fileName}`,
+                      italics: true,
+                      font: FONT_NAME,
+                      size: SIZE_SUB,
+                    }),
+                  ],
+                })
+              );
+            }
+          } else {
             appendix2Children.push(
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                spacing: { before: 60, after: 30 },
-                children: [
-                  new ImageRun({
-                    data: page.imageBytes,
-                    transformation: { width: targetWidth, height: scaledHeight },
-                    type: 'png',
-                  }),
-                ],
-              }),
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 10, after: 60 },
+                spacing: { before: 40, after: 40 },
                 children: [
                   new TextRun({
-                    text: `Trang ${page.pageNumber} / ${pages.length} - ${pdfAtt.fileName}`,
+                    text: `(Tài liệu đính kèm: ${pdfAtt.fileName} - Vui lòng xem tệp PDF gốc)`,
                     italics: true,
                     font: FONT_NAME,
                     size: SIZE_SUB,
@@ -1151,7 +1100,23 @@ export async function exportReportToDocx(report: ReportData) {
           }
         } catch (e) {
           console.error(`Could not render PDF pages for ${pdfAtt.fileName}:`, e);
+          appendix2Children.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { before: 40, after: 40 },
+              children: [
+                new TextRun({
+                  text: `(Tài liệu đính kèm: ${pdfAtt.fileName} - Vui lòng xem tệp PDF gốc)`,
+                  italics: true,
+                  font: FONT_NAME,
+                  size: SIZE_SUB,
+                }),
+              ],
+            })
+          );
         }
+      } else {
+        console.warn(`Could not load buffer for PDF attachment: ${pdfAtt.fileName}`);
       }
     }
   }
@@ -1338,8 +1303,8 @@ export async function exportReportToDocx(report: ReportData) {
                 page: {
                   size: {
                     orientation: PageOrientation.LANDSCAPE,
-                    width: 16838, // 297 mm
-                    height: 11906, // 210 mm
+                    width: 11906, // Note: docx swaps width and height when orientation is LANDSCAPE to produce w:w="16838" w:h="11906" (297mm x 210mm)
+                    height: 16838,
                   },
                   margin: {
                     left: MARGIN_LEFT, // 3.0 cm (theo trái 3cm)

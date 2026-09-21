@@ -3,9 +3,16 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { AttachmentItem } from '../types';
 import { attachmentService } from './attachmentService';
 
-// Configure pdfjs worker
+// Configure pdfjs worker: Prefer local bundled worker from pdfjs-dist with CDN fallback
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '4.10.38'}/pdf.worker.min.mjs`;
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url
+    ).toString();
+  } catch {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '6.3.289'}/pdf.worker.min.mjs`;
+  }
 }
 
 export const pdfMergeService = {
