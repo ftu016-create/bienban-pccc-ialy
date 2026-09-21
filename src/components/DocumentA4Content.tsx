@@ -397,35 +397,49 @@ export const DocumentA4Content: React.FC<DocumentA4ContentProps> = ({
             </div>
           )}
 
-          {/* Phụ lục 2: A4 Landscape, Thụt đầu dòng, Lề: Trái 3cm, Trên/Dưới/Phải 2cm */}
+          {/* Phụ lục 2: A4 Landscape, Thụt đầu dòng, Lề: Trái 2cm, Trên/Dưới/Phải 1.5cm */}
           {(report.attachments || []).filter((a) => a.fileType === 'pdf').length > 0 && (
             <div className="mt-8 pt-6 border-t-2 border-dashed border-slate-300 print:break-before-page">
               <div className="bg-white border border-slate-300 rounded-lg p-6 sm:p-8 shadow-xs">
-                <div
-                  className="font-bold text-[13pt] mb-3 text-[#17365d] border-b pb-2"
-                  style={{ textIndent: '1.27cm' }}
-                >
-                  PHỤ LỤC 2: SỔ THEO DÕI PHƯƠNG TIỆN PCCC, VĂN BẢN & SƠ ĐỒ ĐÍNH KÈM
+                <div className="text-center mb-4">
+                  <div className="font-bold text-[14pt] text-[#17365d] uppercase tracking-wide">
+                    PHỤ LỤC 2: SỔ THEO DÕI PHƯƠNG TIỆN PCCC, VĂN BẢN & SƠ ĐỒ ĐÍNH KÈM
+                  </div>
+                  <div className="text-[12pt] italic text-slate-600 mt-1">
+                    (Kèm theo Biên bản tự kiểm tra PCCC&CNCH Tháng {report.report_month})
+                  </div>
                 </div>
 
-                <table className="w-full border-collapse border border-black text-[10.5pt]">
-                  <thead>
-                    <tr className="bg-slate-100">
-                      <th className="border border-black px-2 py-1.5 w-12 text-center">STT</th>
-                      <th className="border border-black px-3 py-1.5 text-left">Tên tài liệu / Văn bản PDF đính kèm</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(report.attachments || [])
-                      .filter((a) => a.fileType === 'pdf')
-                      .map((pdfAtt, pIdx) => (
-                        <tr key={pdfAtt.id}>
-                          <td className="border border-black px-2 py-2 text-center">{pIdx + 1}</td>
-                          <td className="border border-black px-3 py-2 font-bold">{pdfAtt.fileName}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-black text-[11pt]">
+                    <thead>
+                      <tr className="bg-slate-100">
+                        <th className="border border-black px-2 py-2 w-12 text-center">STT</th>
+                        <th className="border border-black px-3 py-2 text-left w-[44%]">Tên tài liệu / Văn bản PDF / Sơ đồ đính kèm</th>
+                        <th className="border border-black px-3 py-2 text-left w-[26%]">Nội dung trích yếu / Mô tả</th>
+                        <th className="border border-black px-2 py-2 text-center w-[12%]">Định dạng</th>
+                        <th className="border border-black px-2 py-2 text-center w-[12%]">Ghi chú</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(report.attachments || [])
+                        .filter((a) => a.fileType === 'pdf')
+                        .map((pdfAtt, pIdx) => {
+                          const desc = pdfAtt.description || 'Hồ sơ tài liệu PCCC theo quy định';
+                          const ext = pdfAtt.fileName.split('.').pop()?.toUpperCase() || 'PDF';
+                          return (
+                            <tr key={pdfAtt.id} className="hover:bg-slate-50/60">
+                              <td className="border border-black px-2 py-2 text-center">{pIdx + 1}</td>
+                              <td className="border border-black px-3 py-2 font-bold">{pdfAtt.fileName}</td>
+                              <td className="border border-black px-3 py-2 text-slate-700">{desc}</td>
+                              <td className="border border-black px-2 py-2 text-center text-slate-600">{ext}</td>
+                              <td className="border border-black px-2 py-2 text-center text-emerald-700 font-medium">Đầy đủ, rõ ràng</td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}

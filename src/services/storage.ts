@@ -1,6 +1,11 @@
 import { ReportData } from '../types';
 import { createNewReport, DEFAULT_STAFF_DIRECTORY } from '../data/defaultData';
 import { adminAuthService } from './adminAuth';
+import {
+  saveReportToFirestore,
+  fetchAllSharedReports,
+  deleteReportFromFirestore,
+} from '../lib/firebase';
 
 const REPORTS_KEY = 'pccc_ialy_reports_v1';
 const STAFF_KEY = 'pccc_ialy_staff_directory_v2';
@@ -19,9 +24,54 @@ function getAdminHeaders(): Record<string, string> {
 
 export const storageService = {
   /**
-   * Fetch latest reports from server API so all machines see updated data immediately.
+   * Fetch latest reports from Firestore cloud database (and server API fallback)
+   * so all machines see updated data immediately.
    */
   async fetchFromServer(): Promise<ReportData[]> {
+    // 1. Highest priority: Firebase Firestore (Shared Cloud Database across all computers)
+    try {
+      const remoteReports = await fetchAllSharedReports();
+      if (remoteReports && remoteReports.length > 0) {
+        const cleaned: ReportData[] = remoteReports.map((r) => ({
+          ...r,
+          escape: (r.escape || []).map((esc) =>
+            esc.note && esc.note.includes('Hình ảnh minh chứng được lưu tại thư mục dùng chung')
+              ? { ...esc, note: '' }
+              : esc
+          ),
+          attachments: r.attachments || [],
+        }));
+
+        // Reconcile: If local machine already has reports not yet uploaded to Firestore, push them!
+        const local = this.getAllReports();
+        const remoteIds = new Set(cleaned.map((r) => r.id));
+        const missingOnRemote = local.filter((r) => !remoteIds.has(r.id));
+        if (missingOnRemote.length > 0) {
+          missingOnRemote.forEach((m) => {
+            const safeM: ReportData = { ...m, attachments: m.attachments || [] };
+            saveReportToFirestore(safeM).catch(() => {});
+            cleaned.push(safeM);
+          });
+        }
+
+        try {
+          localStorage.setItem(REPORTS_KEY, JSON.stringify(cleaned));
+        } catch (_) {}
+        return cleaned;
+      } else {
+        // If Firestore is completely empty, push local reports to Firestore so all other machines see them!
+        const local = this.getAllReports();
+        if (local.length > 0) {
+          local.forEach((m) => {
+            saveReportToFirestore(m).catch(() => {});
+          });
+        }
+      }
+    } catch (fsErr) {
+      console.warn('Firestore fetchFromServer notice:', fsErr);
+    }
+
+    // 2. Fallback: Local Node.js server API
     try {
       const res = await fetch('/api/reports');
       const contentType = res.headers.get('content-type') || '';
@@ -146,6 +196,11 @@ export const storageService = {
       console.warn('localStorage save warning:', e);
     }
 
+    // Persist to Firestore cloud database for instant multi-device sync
+    saveReportToFirestore(updated).catch((err) => {
+      console.warn('Firestore background save sync error:', err);
+    });
+
     // Persist to server API in background (if server exists)
     fetch('/api/reports', {
       method: 'POST',
@@ -179,6 +234,11 @@ export const storageService = {
       console.warn('localStorage save warning:', e);
     }
 
+    // Persist to Firestore cloud database
+    saveReportToFirestore(updated).catch((err) => {
+      console.warn('Firestore background save error:', err);
+    });
+
     try {
       const res = await fetch('/api/reports', {
         method: 'POST',
@@ -208,6 +268,11 @@ export const storageService = {
       console.warn('localStorage delete error:', e);
     }
 
+    // Delete from Firestore cloud database
+    deleteReportFromFirestore(id).catch((err) => {
+      console.warn('Firestore background delete error:', err);
+    });
+
     // Call server delete API
     fetch(`/api/reports/${id}`, {
       method: 'DELETE',
@@ -227,6 +292,11 @@ export const storageService = {
     } catch (e) {
       console.warn('localStorage delete error:', e);
     }
+
+    // Delete from Firestore cloud database
+    deleteReportFromFirestore(id).catch((err) => {
+      console.warn('Firestore background delete error:', err);
+    });
 
     try {
       const res = await fetch(`/api/reports/${id}`, {
@@ -304,29 +374,48 @@ export const storageService = {
     return JSON.stringify({ reports, staff, exported_at: new Date().toISOString() }, null, 2);
   },
 
-  importBackupJson(jsonStr: string): boolean {
+  importBackupJson(jsonStr: string): { success: boolean; reports?: ReportData[]; message?: string } {
     try {
       const parsed = JSON.parse(jsonStr);
-      if (Array.isArray(parsed.reports)) {
-        localStorage.setItem(REPORTS_KEY, JSON.stringify(parsed.reports));
-        fetch('/api/reports', {
-          method: 'POST',
-          headers: getAdminHeaders(),
-          body: JSON.stringify({ reports: parsed.reports }),
-        }).catch(() => {});
+      let newReports: ReportData[] = [];
+      if (Array.isArray(parsed)) {
+        newReports = parsed;
+      } else if (parsed && Array.isArray(parsed.reports)) {
+        newReports = parsed.reports;
+      } else {
+        return { success: false, message: 'Tệp sao lưu không đúng cấu trúc biên bản PCCC.' };
       }
-      if (Array.isArray(parsed.staff)) {
+
+      if (newReports.length === 0) {
+        return { success: false, message: 'Tệp không chứa biên bản nào.' };
+      }
+
+      localStorage.setItem(REPORTS_KEY, JSON.stringify(newReports));
+
+      if (parsed && Array.isArray(parsed.staff)) {
         localStorage.setItem(STAFF_KEY, JSON.stringify(parsed.staff));
-        fetch('/api/staff', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ staff: parsed.staff }),
-        }).catch(() => {});
       }
-      return true;
+
+      // Sync all imported reports to Firestore cloud for multi-device availability
+      newReports.forEach((r) => {
+        saveReportToFirestore(r).catch(() => {});
+      });
+
+      // Sync to background server API if available
+      fetch('/api/reports', {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ reports: newReports }),
+      }).catch(() => {});
+
+      return {
+        success: true,
+        reports: this.getAllReports(),
+        message: `Đã nhập và khôi phục thành công ${newReports.length} biên bản!`,
+      };
     } catch (e) {
       console.error('Import failed', e);
-      return false;
+      return { success: false, message: 'Tệp dữ liệu bị hỏng hoặc không thể đọc được định dạng JSON.' };
     }
   },
 };

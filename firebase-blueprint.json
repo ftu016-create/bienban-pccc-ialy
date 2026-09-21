@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "SystemConfig": {
+      "title": "System Configuration",
+      "description": "Global application configuration including the shared admin security PIN",
+      "type": "object",
+      "properties": {
+        "adminPin": {
+          "type": "string",
+          "description": "Shared administrative PIN code",
+          "minLength": 4,
+          "maxLength": 32
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of the last update"
+        }
+      },
+      "required": ["adminPin"]
+    },
+    "ReportDoc": {
+      "title": "Inspection Report Document",
+      "description": "Monthly PCCC inspection report shared across all workshop stations and devices",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique report identifier"
+        },
+        "month": {
+          "type": "string",
+          "description": "Inspection report month (MM/YYYY)"
+        },
+        "reportDate": {
+          "type": "string",
+          "description": "Formatted date of inspection"
+        },
+        "dataJson": {
+          "type": "string",
+          "description": "Full serialized JSON representation of the report"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["id", "month", "dataJson"]
+    }
+  },
+  "firestore": {
+    "/app_settings/{settingId}": {
+      "schema": "SystemConfig",
+      "description": "Global application configuration documents including admin PIN"
+    },
+    "/reports/{reportId}": {
+      "schema": "ReportDoc",
+      "description": "All monthly PCCC inspection reports shared across all computers"
+    }
+  }
+}

@@ -23,6 +23,7 @@ import { ReportData, UserRole } from './types';
 import { storageService } from './services/storage';
 import { adminAuthService } from './services/adminAuth';
 import { exportReportToDocx } from './services/exportDocx';
+import { subscribeToSharedReports } from './lib/firebase';
 
 // Components
 import { ReportForm } from './components/ReportForm';
@@ -68,7 +69,7 @@ export default function App() {
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [showVercelModal, setShowVercelModal] = useState(false);
 
-  // Sync with server on initial mount
+  // Sync with Firestore cloud and server on initial mount, plus real-time multi-device subscription
   useEffect(() => {
     storageService
       .fetchFromServer()
@@ -84,6 +85,20 @@ export default function App() {
       .catch((err) => {
         console.warn('Initial server sync notice:', err);
       });
+
+    // Real-time listener: When another computer adds/updates a report, reflect it instantly!
+    const unsub = subscribeToSharedReports((remoteReports) => {
+      if (remoteReports && remoteReports.length > 0) {
+        setReports(remoteReports);
+        try {
+          localStorage.setItem('pccc_ialy_reports_v1', JSON.stringify(remoteReports));
+        } catch (_) {}
+      }
+    });
+
+    return () => {
+      unsub();
+    };
   }, []);
 
   // Toast alert
@@ -486,6 +501,13 @@ export default function App() {
             userRole={userRole}
             onOpenAdminLogin={() => setShowAdminModal(true)}
             onPrintReport={handlePrintSpecificReport}
+            onImportReports={(imported) => {
+              setReports(imported);
+              if (imported.length > 0) {
+                setCurrentId(imported[0].id);
+              }
+            }}
+            onShowToast={showToast}
           />
         )}
       </main>

@@ -100,7 +100,7 @@ export const pdfMergeService = {
       for (let pageNum = 1; pageNum <= numPages; pageNum++) {
         try {
           const page = await pdf.getPage(pageNum);
-          const viewport = page.getViewport({ scale: 1.5 }); // Good resolution for print
+          const viewport = page.getViewport({ scale: 2.0 }); // High resolution for sharp print display
 
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');

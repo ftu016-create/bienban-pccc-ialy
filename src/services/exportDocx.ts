@@ -37,6 +37,14 @@ const MARGIN_TOP = 1134;
 const MARGIN_BOTTOM = 1134;
 const INDENT_FIRST_LINE = 680;
 
+// Landscape margin for Appendix (Nghị định 30/2020/NĐ-CP for landscape drawings, diagrams & tables):
+// Left: 2.0cm (1134 dxa), Right: 1.5cm (850 dxa), Top: 1.5cm (850 dxa), Bottom: 1.5cm (850 dxa)
+// This expands the printable width to 26.2 cm (990px) and printable height to 18.0 cm (680px)
+const LANDSCAPE_MARGIN_LEFT = 1134;
+const LANDSCAPE_MARGIN_RIGHT = 850;
+const LANDSCAPE_MARGIN_TOP = 850;
+const LANDSCAPE_MARGIN_BOTTOM = 850;
+
 const formatPersonName = (rawName: string) => {
   const clean = rawName.trim().replace(/^-\s*/, '');
   if (clean.toLowerCase().startsWith('ông')) {
@@ -884,7 +892,7 @@ export async function exportReportToDocx(report: ReportData) {
                 children: [
                   new ImageRun({
                     data: img.bytes,
-                    transformation: { width: 260, height: 180 },
+                    transformation: { width: 285, height: 210 },
                     type: img.type as any,
                   }),
                 ],
@@ -897,7 +905,7 @@ export async function exportReportToDocx(report: ReportData) {
                     text: img.caption,
                     bold: true,
                     font: FONT_NAME,
-                    size: 20, // 10pt
+                    size: SIZE_SUB, // 11pt
                   }),
                 ],
               }),
@@ -933,12 +941,25 @@ export async function exportReportToDocx(report: ReportData) {
   if (pdfAttachments.length > 0) {
     appendix2Children.push(
       new Paragraph({
-        indent: { firstLine: INDENT_FIRST_LINE },
-        spacing: { before: 140, after: 120 },
+        pageBreakBefore: true,
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 100, after: 60 },
         children: [
           new TextRun({
-            text: 'PHỤ LỤC 2: SỔ THEO DÕI VĂN BẢN, PHƯƠNG TIỆN PCCC & SƠ ĐỒ ĐÍNH KÈM',
+            text: 'PHỤ LỤC 2: SỔ THEO DÕI PHƯƠNG TIỆN PCCC, VĂN BẢN & SƠ ĐỒ ĐÍNH KÈM',
             bold: true,
+            font: FONT_NAME,
+            size: SIZE_TITLE,
+          }),
+        ],
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 0, after: 160 },
+        children: [
+          new TextRun({
+            text: `(Kèm theo Biên bản tự kiểm tra PCCC&CNCH Tháng ${report.report_month})`,
+            italics: true,
             font: FONT_NAME,
             size: SIZE_MAIN,
           }),
@@ -946,56 +967,95 @@ export async function exportReportToDocx(report: ReportData) {
       })
     );
 
+    const tableHeaderCell = (
+      text: string,
+      widthPct: number,
+      align: (typeof AlignmentType)[keyof typeof AlignmentType] = AlignmentType.CENTER
+    ) =>
+      new TableCell({
+        width: { size: widthPct, type: WidthType.PERCENTAGE },
+        borders: cellAllBorders,
+        margins: { top: 120, bottom: 120, left: 160, right: 160 },
+        shading: { fill: 'F1F5F9' },
+        children: [
+          new Paragraph({
+            alignment: align,
+            children: [new TextRun({ text, bold: true, font: FONT_NAME, size: SIZE_MAIN })],
+          }),
+        ],
+      });
+
     const docTableRows: TableRow[] = [
       new TableRow({
         tableHeader: true,
         children: [
-          new TableCell({
-            width: { size: 1000, type: WidthType.DXA },
-            borders: cellAllBorders,
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: 'STT', bold: true, font: FONT_NAME, size: SIZE_SUB })],
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: 12993, type: WidthType.DXA },
-            borders: cellAllBorders,
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.LEFT,
-                children: [new TextRun({ text: 'Tên tài liệu / Văn bản PDF đính kèm', bold: true, font: FONT_NAME, size: SIZE_SUB })],
-              }),
-            ],
-          }),
+          tableHeaderCell('STT', 6, AlignmentType.CENTER),
+          tableHeaderCell('Tên tài liệu / Văn bản PDF / Sơ đồ đính kèm', 44, AlignmentType.LEFT),
+          tableHeaderCell('Nội dung trích yếu / Mô tả', 26, AlignmentType.LEFT),
+          tableHeaderCell('Định dạng', 12, AlignmentType.CENTER),
+          tableHeaderCell('Ghi chú / Tình trạng', 12, AlignmentType.CENTER),
         ],
       }),
     ];
 
     for (let pIdx = 0; pIdx < pdfAttachments.length; pIdx++) {
       const pdfAtt = pdfAttachments[pIdx];
+      const desc = pdfAtt.description || 'Hồ sơ tài liệu PCCC theo quy định';
+      const ext = pdfAtt.fileName.split('.').pop()?.toUpperCase() || 'PDF';
 
       docTableRows.push(
         new TableRow({
           children: [
             new TableCell({
-              width: { size: 1000, type: WidthType.DXA },
+              width: { size: 6, type: WidthType.PERCENTAGE },
               borders: cellAllBorders,
+              margins: { top: 100, bottom: 100, left: 120, right: 120 },
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  children: [new TextRun({ text: `${pIdx + 1}`, font: FONT_NAME, size: SIZE_SUB })],
+                  children: [new TextRun({ text: `${pIdx + 1}`, font: FONT_NAME, size: SIZE_MAIN })],
                 }),
               ],
             }),
             new TableCell({
-              width: { size: 12993, type: WidthType.DXA },
+              width: { size: 44, type: WidthType.PERCENTAGE },
               borders: cellAllBorders,
+              margins: { top: 100, bottom: 100, left: 140, right: 140 },
               children: [
                 new Paragraph({
-                  children: [new TextRun({ text: pdfAtt.fileName, bold: true, font: FONT_NAME, size: SIZE_SUB })],
+                  children: [new TextRun({ text: pdfAtt.fileName, bold: true, font: FONT_NAME, size: SIZE_MAIN })],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 26, type: WidthType.PERCENTAGE },
+              borders: cellAllBorders,
+              margins: { top: 100, bottom: 100, left: 140, right: 140 },
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: desc, font: FONT_NAME, size: SIZE_MAIN })],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 12, type: WidthType.PERCENTAGE },
+              borders: cellAllBorders,
+              margins: { top: 100, bottom: 100, left: 120, right: 120 },
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  children: [new TextRun({ text: ext, font: FONT_NAME, size: SIZE_MAIN })],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 12, type: WidthType.PERCENTAGE },
+              borders: cellAllBorders,
+              margins: { top: 100, bottom: 100, left: 120, right: 120 },
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  children: [new TextRun({ text: 'Đầy đủ, rõ ràng', font: FONT_NAME, size: SIZE_MAIN })],
                 }),
               ],
             }),
@@ -1006,7 +1066,7 @@ export async function exportReportToDocx(report: ReportData) {
 
     appendix2Children.push(
       new Table({
-        width: { size: 13993, type: WidthType.DXA },
+        width: { size: 100, type: WidthType.PERCENTAGE },
         borders: {
           top: borderThin,
           bottom: borderThin,
@@ -1031,7 +1091,7 @@ export async function exportReportToDocx(report: ReportData) {
           new Paragraph({
             pageBreakBefore: true,
             indent: { firstLine: INDENT_FIRST_LINE },
-            spacing: { before: 100, after: 60 },
+            spacing: { before: 120, after: 80 },
             children: [
               new TextRun({
                 text: `Tài liệu ${pIdx + 1}: ${cleanTitle}`,
@@ -1046,41 +1106,163 @@ export async function exportReportToDocx(report: ReportData) {
         try {
           const pages = await pdfMergeService.renderPdfPagesToImages(pdfBuffer);
           if (pages && pages.length > 0) {
-            for (let i = 0; i < pages.length; i++) {
-              const page = pages[i];
-              // Scale to fit landscape page nicely: printable area max width 800px, max height 500px
-              const maxWidth = 800;
-              const maxHeight = 500;
-              const scale = Math.min(maxWidth / page.width, maxHeight / page.height);
-              const targetWidth = Math.max(200, Math.round(page.width * scale));
-              const targetHeight = Math.max(200, Math.round(page.height * scale));
+            let i = 0;
+            while (i < pages.length) {
+              const currentPage = pages[i];
+              const isLandscape = currentPage.width >= currentPage.height;
 
-              appendix2Children.push(
-                new Paragraph({
-                  pageBreakBefore: i > 0,
-                  alignment: AlignmentType.CENTER,
-                  spacing: { before: 30, after: 20 },
-                  children: [
-                    new ImageRun({
-                      data: page.imageBytes,
-                      transformation: { width: targetWidth, height: targetHeight },
-                      type: 'png',
+              if (isLandscape) {
+                // Landscape drawing / diagram: Scale up to fill full printable area of landscape sheet (width ~980px, height ~615px)
+                const maxWidth = 980;
+                const maxHeight = 615;
+                const scale = Math.min(maxWidth / currentPage.width, maxHeight / currentPage.height);
+                const targetWidth = Math.max(300, Math.round(currentPage.width * scale));
+                const targetHeight = Math.max(200, Math.round(currentPage.height * scale));
+
+                appendix2Children.push(
+                  new Paragraph({
+                    pageBreakBefore: i > 0,
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 20, after: 15 },
+                    children: [
+                      new ImageRun({
+                        data: currentPage.imageBytes,
+                        transformation: { width: targetWidth, height: targetHeight },
+                        type: 'png',
+                      }),
+                    ],
+                  }),
+                  new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 5, after: 30 },
+                    children: [
+                      new TextRun({
+                        text: `Trang ${currentPage.pageNumber} / ${pages.length} - ${pdfAtt.fileName}`,
+                        italics: true,
+                        font: FONT_NAME,
+                        size: SIZE_SUB,
+                      }),
+                    ],
+                  })
+                );
+                i++;
+              } else {
+                // Portrait page: check if consecutive portrait page exists to form a 2-page landscape spread
+                const nextPage = i + 1 < pages.length && pages[i + 1].width < pages[i + 1].height ? pages[i + 1] : null;
+
+                if (nextPage) {
+                  // Two portrait pages side-by-side in a 2-column borderless table
+                  const colMaxWidth = 475;
+                  const colMaxHeight = 615;
+
+                  const scale1 = Math.min(colMaxWidth / currentPage.width, colMaxHeight / currentPage.height);
+                  const w1 = Math.round(currentPage.width * scale1);
+                  const h1 = Math.round(currentPage.height * scale1);
+
+                  const scale2 = Math.min(colMaxWidth / nextPage.width, colMaxHeight / nextPage.height);
+                  const w2 = Math.round(nextPage.width * scale2);
+                  const h2 = Math.round(nextPage.height * scale2);
+
+                  const makeSpreadCell = (pg: typeof currentPage, w: number, h: number) =>
+                    new TableCell({
+                      width: { size: 50, type: WidthType.PERCENTAGE },
+                      borders: {
+                        top: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                        bottom: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                        left: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                        right: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                      },
+                      children: [
+                        new Paragraph({
+                          alignment: AlignmentType.CENTER,
+                          spacing: { before: 15, after: 10 },
+                          children: [
+                            new ImageRun({
+                              data: pg.imageBytes,
+                              transformation: { width: w, height: h },
+                              type: 'png',
+                            }),
+                          ],
+                        }),
+                        new Paragraph({
+                          alignment: AlignmentType.CENTER,
+                          spacing: { before: 5, after: 20 },
+                          children: [
+                            new TextRun({
+                              text: `Trang ${pg.pageNumber} / ${pages.length} - ${pdfAtt.fileName}`,
+                              italics: true,
+                              font: FONT_NAME,
+                              size: SIZE_SUB,
+                            }),
+                          ],
+                        }),
+                      ],
+                    });
+
+                  appendix2Children.push(
+                    new Paragraph({
+                      pageBreakBefore: i > 0,
+                      spacing: { before: 10, after: 10 },
+                      children: [new TextRun({ text: '' })],
                     }),
-                  ],
-                }),
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { before: 10, after: 40 },
-                  children: [
-                    new TextRun({
-                      text: `Trang ${page.pageNumber} / ${pages.length} - ${pdfAtt.fileName}`,
-                      italics: true,
-                      font: FONT_NAME,
-                      size: SIZE_SUB,
+                    new Table({
+                      width: { size: 100, type: WidthType.PERCENTAGE },
+                      borders: {
+                        top: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                        bottom: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                        left: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                        right: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                        insideHorizontal: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                        insideVertical: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+                      },
+                      rows: [
+                        new TableRow({
+                          children: [
+                            makeSpreadCell(currentPage, w1, h1),
+                            makeSpreadCell(nextPage, w2, h2),
+                          ],
+                        }),
+                      ],
+                    })
+                  );
+                  i += 2;
+                } else {
+                  // Single portrait page: enlarge height up to 620px, centered
+                  const maxWidth = 980;
+                  const maxHeight = 620;
+                  const scale = Math.min(maxWidth / currentPage.width, maxHeight / currentPage.height);
+                  const targetWidth = Math.round(currentPage.width * scale);
+                  const targetHeight = Math.round(currentPage.height * scale);
+
+                  appendix2Children.push(
+                    new Paragraph({
+                      pageBreakBefore: i > 0,
+                      alignment: AlignmentType.CENTER,
+                      spacing: { before: 20, after: 15 },
+                      children: [
+                        new ImageRun({
+                          data: currentPage.imageBytes,
+                          transformation: { width: targetWidth, height: targetHeight },
+                          type: 'png',
+                        }),
+                      ],
                     }),
-                  ],
-                })
-              );
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      spacing: { before: 5, after: 30 },
+                      children: [
+                        new TextRun({
+                          text: `Trang ${currentPage.pageNumber} / ${pages.length} - ${pdfAtt.fileName}`,
+                          italics: true,
+                          font: FONT_NAME,
+                          size: SIZE_SUB,
+                        }),
+                      ],
+                    })
+                  );
+                  i++;
+                }
+              }
             }
           } else {
             appendix2Children.push(
@@ -1307,10 +1489,10 @@ export async function exportReportToDocx(report: ReportData) {
                     height: 16838,
                   },
                   margin: {
-                    left: MARGIN_LEFT, // 3.0 cm (theo trái 3cm)
-                    top: MARGIN_TOP, // 2.0 cm (trên 2cm)
-                    bottom: MARGIN_BOTTOM, // 2.0 cm (dưới 2cm)
-                    right: MARGIN_RIGHT, // 2.0 cm (phải 2cm)
+                    left: LANDSCAPE_MARGIN_LEFT, // 2.0 cm
+                    top: LANDSCAPE_MARGIN_TOP, // 1.5 cm
+                    bottom: LANDSCAPE_MARGIN_BOTTOM, // 1.5 cm
+                    right: LANDSCAPE_MARGIN_RIGHT, // 1.5 cm
                   },
                 },
               },

@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    match /app_settings/{settingId} {
+      allow read: if true;
+      allow write: if isValidId(settingId)
+        && request.resource.data.adminPin is string
+        && request.resource.data.adminPin.size() >= 4
+        && request.resource.data.adminPin.size() <= 32;
+    }
+
+    match /reports/{reportId} {
+      allow read: if true;
+      allow write: if isValidId(reportId)
+        && request.resource.data.id is string
+        && request.resource.data.month is string
+        && request.resource.data.dataJson is string;
+      allow delete: if isValidId(reportId);
+    }
+  }
+}

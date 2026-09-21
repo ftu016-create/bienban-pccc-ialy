@@ -13,9 +13,13 @@ import {
   CheckCircle2,
   Building2,
   Printer,
+  Upload,
+  HardDriveDownload,
+  Share2,
 } from 'lucide-react';
 import { ReportData, UserRole } from '../types';
 import { exportReportToDocx } from '../services/exportDocx';
+import { storageService } from '../services/storage';
 
 interface ReportHistoryListProps {
   reports: ReportData[];
@@ -29,6 +33,8 @@ interface ReportHistoryListProps {
   userRole?: UserRole;
   onOpenAdminLogin?: () => void;
   onPrintReport?: (report: ReportData) => void;
+  onImportReports?: (reports: ReportData[]) => void;
+  onShowToast?: (msg: string, type?: 'success' | 'info' | 'error') => void;
 }
 
 export const ReportHistoryList: React.FC<ReportHistoryListProps> = ({
@@ -43,9 +49,59 @@ export const ReportHistoryList: React.FC<ReportHistoryListProps> = ({
   userRole = 'viewer',
   onOpenAdminLogin,
   onPrintReport,
+  onImportReports,
+  onShowToast,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [reportToDelete, setReportToDelete] = useState<ReportData | null>(null);
+
+  const handleExportBackup = () => {
+    try {
+      const jsonStr = storageService.exportBackupJson();
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.download = `sao_luu_pccc_ialy_${reports.length}_bien_ban_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      if (onShowToast) {
+        onShowToast(`Đã xuất file sao lưu chứa toàn bộ ${reports.length} biên bản thành công!`);
+      }
+    } catch (err) {
+      if (onShowToast) {
+        onShowToast('Lỗi khi xuất file sao lưu.', 'error');
+      }
+    }
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (!content) return;
+      const res = storageService.importBackupJson(content);
+      if (res.success && res.reports) {
+        if (onImportReports) {
+          onImportReports(res.reports);
+        }
+        if (onShowToast) {
+          onShowToast(res.message || 'Đã khôi phục danh sách biên bản thành công!');
+        }
+      } else {
+        if (onShowToast) {
+          onShowToast(res.message || 'Không thể đọc dữ liệu sao lưu.', 'error');
+        }
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   const filteredReports = reports.filter((r) => {
     const q = searchTerm.toLowerCase();
@@ -71,16 +127,57 @@ export const ReportHistoryList: React.FC<ReportHistoryListProps> = ({
           </p>
         </div>
 
-        {userRole === 'admin' && (
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {/* Export Backup JSON */}
           <button
             type="button"
-            onClick={onCreateNewReport}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto"
+            onClick={handleExportBackup}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-2xs transition cursor-pointer"
+            title="Tải về file sao lưu toàn bộ biên bản để chuyển sang máy khác"
           >
-            <Plus className="w-4 h-4" />
-            <span>+ Lập biên bản tháng mới</span>
+            <HardDriveDownload className="w-3.5 h-3.5 text-blue-600" />
+            <span>Sao lưu {reports.length} biên bản (Xuất file)</span>
           </button>
-        )}
+
+          {/* Import Backup JSON */}
+          {userRole === 'admin' && (
+            <label
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-2xs transition cursor-pointer"
+              title="Khôi phục hoặc nạp thêm biên bản từ file sao lưu trên máy khác"
+            >
+              <Upload className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Nhập dữ liệu</span>
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={handleImportBackup}
+                className="hidden"
+              />
+            </label>
+          )}
+
+          {userRole === 'admin' && (
+            <button
+              type="button"
+              onClick={onCreateNewReport}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ Lập biên bản tháng mới</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Sync tip banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2.5 text-xs text-blue-900">
+        <Share2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+        <div className="space-y-0.5">
+          <p className="font-bold">Đồng bộ giữa nhiều máy tính:</p>
+          <p className="text-blue-700">
+            Nếu bạn đã tạo biên bản trên máy tính này và muốn máy khác cũng xem được: Nhấn nút <strong>"Sao lưu {reports.length} biên bản (Xuất file)"</strong>, sau đó sang máy tính khác mở ứng dụng và chọn <strong>"Nhập dữ liệu"</strong> để đồng bộ toàn bộ ngay lập tức!
+          </p>
+        </div>
       </div>
 
       {/* Search Input */}
