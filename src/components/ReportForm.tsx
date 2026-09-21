@@ -256,37 +256,6 @@ export const ReportForm: React.FC<ReportFormProps> = ({
 
   return (
     <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-6 space-y-6">
-      {/* Quick Scanner Shortcut Banner (Admin Only) */}
-      {onOpenScanner && userRole === 'admin' && (
-        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 shadow-md">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
-              <Sparkles className="w-5 h-5 text-amber-300" />
-            </div>
-            <div>
-              <h4 className="font-bold text-sm sm:text-base flex items-center gap-2">
-                <span>Quét file kiểm tra Bảng II (Excel, Word, OCR)</span>
-                <span className="text-[10px] bg-amber-400 text-slate-900 font-extrabold px-2 py-0.5 rounded-full">
-                  Mới
-                </span>
-              </h4>
-              <p className="text-xs text-slate-200 mt-0.5">
-                Tự động nhận diện thiết bị vỡ, tụt áp, rò rỉ van để điền cột Không đạt, trừ cột Đạt, điền Ghi chú và sinh Kiến nghị theo từng nhà máy.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onOpenScanner}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-900 hover:bg-blue-50 active:bg-blue-100 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
-          >
-            <UploadCloud className="w-4 h-4 text-blue-600" />
-            <span>Mở công cụ quét file</span>
-          </button>
-        </div>
-      )}
-
       {/* ---------------- CARD 1: THÔNG TIN CHUNG & TIÊU ĐỀ ---------------- */}
       <div className="bg-white rounded-xl shadow-xs p-5 sm:p-6 transition-all border border-slate-200">
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">

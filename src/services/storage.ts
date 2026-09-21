@@ -24,7 +24,8 @@ export const storageService = {
   async fetchFromServer(): Promise<ReportData[]> {
     try {
       const res = await fetch('/api/reports');
-      if (res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const json = await res.json();
         if (json.success && Array.isArray(json.reports) && json.reports.length > 0) {
           const reports = json.reports as ReportData[];
@@ -87,7 +88,8 @@ export const storageService = {
   async getReportByIdAsync(id: string): Promise<ReportData | null> {
     try {
       const res = await fetch(`/api/reports/${id}`);
-      if (res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const json = await res.json();
         if (json.success && json.report) {
           return json.report as ReportData;
@@ -122,9 +124,13 @@ export const storageService = {
       all.unshift(updated);
     }
 
-    localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
+    try {
+      localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
+    } catch (e) {
+      console.warn('localStorage save warning:', e);
+    }
 
-    // Persist to server API in background
+    // Persist to server API in background (if server exists)
     fetch('/api/reports', {
       method: 'POST',
       headers: getAdminHeaders(),
@@ -150,7 +156,12 @@ export const storageService = {
     } else {
       all.unshift(updated);
     }
-    localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
+
+    try {
+      localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
+    } catch (e) {
+      console.warn('localStorage save warning:', e);
+    }
 
     try {
       const res = await fetch('/api/reports', {
@@ -158,20 +169,28 @@ export const storageService = {
         headers: getAdminHeaders(),
         body: JSON.stringify({ report: updated }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, error: data.error || `HTTP ${res.status}` };
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          console.warn('Server save returned non-success:', data.error);
+        }
       }
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || 'Lỗi mạng khi lưu lên máy chủ' };
+      // Local save already succeeded
+      return { success: true };
     }
   },
 
   deleteReport(id: string): ReportData[] {
     const all = this.getAllReports();
     const filtered = all.filter((r) => r.id !== id);
-    localStorage.setItem(REPORTS_KEY, JSON.stringify(filtered));
+    try {
+      localStorage.setItem(REPORTS_KEY, JSON.stringify(filtered));
+    } catch (e) {
+      console.warn('localStorage delete error:', e);
+    }
 
     // Call server delete API
     fetch(`/api/reports/${id}`, {
@@ -185,21 +204,29 @@ export const storageService = {
   },
 
   async deleteReportAsync(id: string): Promise<{ success: boolean; error?: string }> {
+    const all = this.getAllReports();
+    const filtered = all.filter((r) => r.id !== id);
+    try {
+      localStorage.setItem(REPORTS_KEY, JSON.stringify(filtered));
+    } catch (e) {
+      console.warn('localStorage delete error:', e);
+    }
+
     try {
       const res = await fetch(`/api/reports/${id}`, {
         method: 'DELETE',
         headers: getAdminHeaders(),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, error: data.error || `HTTP ${res.status}` };
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          console.warn('Server delete report warning:', data.error);
+        }
       }
-      const all = this.getAllReports();
-      const filtered = all.filter((r) => r.id !== id);
-      localStorage.setItem(REPORTS_KEY, JSON.stringify(filtered));
       return { success: true };
     } catch (e: any) {
-      return { success: false, error: e?.message || 'Lỗi xóa báo cáo trên máy chủ' };
+      return { success: true };
     }
   },
 

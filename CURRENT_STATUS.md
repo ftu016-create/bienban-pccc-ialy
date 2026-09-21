@@ -141,7 +141,7 @@ Có logic xóa biên bản trong server.
 
 ## Đã có
 
-Có Multer.
+Có Multer cho server Express.
 
 Có upload nhiều file:
 
@@ -159,6 +159,12 @@ Server phân loại:
 
 * PDF;
 * image.
+
+Hỗ trợ cơ chế Client-Side Fallback tự động (chạy mượt trên môi trường Serverless như Vercel):
+* Nén và chuyển đổi ảnh tối ưu sang WebP/JPEG DataURL client-side nếu server upload không khả dụng.
+* Đọc tài liệu PDF sang DataURL client-side.
+* Giao diện tải lên tinh giản: Đã bỏ 4 trường nhập metadata ("Thuộc Nhà máy", "Hạng mục kiểm tra", "Vị trí chi tiết", "Ghi chú/Tiêu đề") theo yêu cầu, người dùng chỉ cần kéo thả hoặc chọn file trực tiếp.
+* Xóa tệp và xóa biên bản đều sử dụng popup xác nhận nội bộ (In-app Confirmation Modal), không dùng `window.confirm` để tránh bị chặn trên trình duyệt/iframe.
 
 Có API tải file:
 

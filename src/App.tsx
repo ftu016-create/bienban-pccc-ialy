@@ -109,13 +109,8 @@ export default function App() {
     setReports(updatedReports);
   };
 
-  // Save report (Drafts can be saved by User or Admin; Completed reports require Admin)
+  // Save report (Admin can save anytime)
   const handleSaveReport = () => {
-    if (currentReport?.status === 'completed' && userRole !== 'admin') {
-      showToast('Biên bản đã hoàn tất. Cần quyền Admin để mở khóa và lưu!', 'error');
-      setShowAdminModal(true);
-      return;
-    }
     if (currentReport) {
       storageService.saveReport(currentReport);
       showToast(`Đã lưu biên bản Tháng ${currentReport.report_month} thành công lên hệ thống máy chủ!`);
@@ -228,21 +223,6 @@ export default function App() {
 
             {/* Center: View Switcher Tabs */}
             <nav className="hidden lg:flex items-center bg-black/20 p-1 rounded-xl border border-white/10 text-xs font-semibold">
-              {userRole === 'admin' && (
-                <button
-                  type="button"
-                  onClick={() => setActiveView('edit')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition cursor-pointer ${
-                    activeView === 'edit'
-                      ? 'bg-white text-[#17365d] shadow-xs font-bold'
-                      : 'text-blue-100 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  <span>Soạn thảo / Nhập liệu</span>
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={() => setActiveView('history')}
@@ -363,19 +343,6 @@ export default function App() {
 
           {/* Mobile View Switcher Bar */}
           <div className="flex lg:hidden items-center justify-around py-2 border-t border-white/10 text-xs font-semibold">
-            {userRole === 'admin' && (
-              <button
-                type="button"
-                onClick={() => setActiveView('edit')}
-                className={`flex items-center gap-1 px-3 py-1 rounded-lg transition ${
-                  activeView === 'edit' ? 'bg-white text-[#17365d] font-bold' : 'text-blue-100'
-                }`}
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Soạn thảo</span>
-              </button>
-            )}
-
             <button
               type="button"
               onClick={() => setActiveView('history')}

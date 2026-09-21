@@ -28,19 +28,6 @@ interface InspectionMediaUploaderProps {
   onAddRecommendation?: (text: string) => void;
 }
 
-const CATEGORY_OPTIONS = [
-  'Bình chữa cháy xách tay / xe đẩy',
-  'Hệ thống chữa cháy vách tường',
-  'Hệ thống chữa cháy khí CO2 / Foam',
-  'Hệ thống báo cháy tự động / Đầu báo',
-  'Lối thoát nạn, cửa thoát nạn, cầu thang',
-  'Đèn chiếu sáng sự cố & Biển chỉ dẫn EXIT',
-  'Hệ thống cấp điện & Tủ điện phân phối',
-  'Nguồn nước chữa cháy & Trạm bơm',
-  'Hồ sơ kiểm định, sơ đồ PCCC & Văn bản',
-  'Khu vực chung hiện trường khác',
-];
-
 export const InspectionMediaUploader: React.FC<InspectionMediaUploaderProps> = ({
   report,
   userRole,
@@ -51,11 +38,8 @@ export const InspectionMediaUploader: React.FC<InspectionMediaUploaderProps> = (
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
-  // Upload metadata form state
-  const [selectedCategory, setSelectedCategory] = useState(CATEGORY_OPTIONS[0]);
-  const [selectedPlant, setSelectedPlant] = useState<'ialy' | 'ialy_mr'>('ialy');
-  const [locationText, setLocationText] = useState('');
-  const [descriptionText, setDescriptionText] = useState('');
+  // Deletion confirmation state
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Filtering state
   const [filterType, setFilterType] = useState<'all' | 'image' | 'pdf'>('all');
@@ -74,8 +58,7 @@ export const InspectionMediaUploader: React.FC<InspectionMediaUploaderProps> = (
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const isCompleted = report.status === 'completed';
-  const canEdit = !isCompleted || userRole === 'admin';
+  const canEdit = userRole === 'admin';
 
   const attachments = report.attachments || [];
 
@@ -99,10 +82,7 @@ export const InspectionMediaUploader: React.FC<InspectionMediaUploaderProps> = (
     const fileList = Array.from(files);
     const result = await attachmentService.uploadAttachments(report.id, fileList, {
       targetType: 'inspection_finding',
-      targetCategory: selectedCategory,
-      plant: selectedPlant,
-      locationDescription: locationText.trim(),
-      description: descriptionText.trim(),
+      plant: 'ialy',
     });
 
     setIsUploading(false);
@@ -114,12 +94,10 @@ export const InspectionMediaUploader: React.FC<InspectionMediaUploaderProps> = (
         attachments: updatedList,
       };
       onUpdateReport(updatedReport);
-      setUploadSuccess(`Đã tải lên thành công ${result.attachments.length} tệp đính kèm vào máy chủ.`);
-      setLocationText('');
-      setDescriptionText('');
+      setUploadSuccess(`Đã tải lên và đính kèm ${result.attachments.length} tệp thành công.`);
       setTimeout(() => setUploadSuccess(null), 4000);
     } else {
-      setUploadError(result.error || 'Lỗi khi tải tệp lên máy chủ.');
+      setUploadError(result.error || 'Lỗi khi tải tệp.');
     }
 
     if (fileInputRef.current) {
@@ -129,15 +107,14 @@ export const InspectionMediaUploader: React.FC<InspectionMediaUploaderProps> = (
 
   const handleDelete = async (attId: string) => {
     if (!canEdit) return;
-    const confirmed = window.confirm('Bạn có chắc chắn muốn xóa tệp đính kèm này khỏi máy chủ?');
-    if (!confirmed) return;
+    setConfirmDeleteId(null);
 
     const res = await attachmentService.deleteAttachment(report.id, attId);
     if (res.success) {
       const updatedList = attachments.filter((a) => a.id !== attId);
       onUpdateReport({ ...report, attachments: updatedList });
     } else {
-      alert(res.error || 'Không thể xóa tệp.');
+      setUploadError(res.error || 'Không thể xóa tệp.');
     }
   };
 
@@ -205,13 +182,6 @@ export const InspectionMediaUploader: React.FC<InspectionMediaUploaderProps> = (
             Lưu trữ trực tiếp trên máy chủ tập trung (dùng chung cho mọi máy tính, tự động nhúng vào file Word và PDF khi xuất).
           </p>
         </div>
-
-        {isCompleted && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs">
-            <Lock className="w-4 h-4 text-amber-600" />
-            <span>Biên bản đã Hoàn tất (Được khóa bảo vệ)</span>
-          </div>
-        )}
       </div>
 
       {/* Upload Zone (Only if authorized) */}
@@ -266,58 +236,6 @@ export const InspectionMediaUploader: React.FC<InspectionMediaUploaderProps> = (
               <p className="text-xs text-slate-500">
                 Hỗ trợ chọn cùng lúc nhiều file: JPG, PNG, WEBP (ảnh chụp PCCC) và PDF (sơ đồ, hồ sơ kiểm định). Tối đa 100MB/tệp.
               </p>
-            </div>
-          </div>
-
-          {/* Upload Metadata Settings */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-lg border border-slate-200">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Thuộc Nhà máy:</label>
-              <select
-                value={selectedPlant}
-                onChange={(e) => setSelectedPlant(e.target.value as 'ialy' | 'ialy_mr')}
-                className="w-full text-xs bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="ialy">NMTĐ Ialy</option>
-                <option value="ialy_mr">NMTĐ Ialy Mở rộng</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Hạng mục kiểm tra:</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full text-xs bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                {CATEGORY_OPTIONS.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Vị trí chi tiết hiện trường:</label>
-              <input
-                type="text"
-                placeholder="VD: Cao trình 41.5m Gian máy..."
-                value={locationText}
-                onChange={(e) => setLocationText(e.target.value)}
-                className="w-full text-xs bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Ghi chú / Tiêu đề ảnh:</label>
-              <input
-                type="text"
-                placeholder="Tự động theo tên file nếu để trống"
-                value={descriptionText}
-                onChange={(e) => setDescriptionText(e.target.value)}
-                className="w-full text-xs bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
             </div>
           </div>
 
@@ -537,14 +455,34 @@ export const InspectionMediaUploader: React.FC<InspectionMediaUploaderProps> = (
                       <div className="flex items-center gap-1.5">
                         {/* Delete Button */}
                         {canEdit && (
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(att.id)}
-                            className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                            title="Xóa tệp"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          confirmDeleteId === att.id ? (
+                            <div className="flex items-center gap-1 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
+                              <span className="text-[10px] text-rose-700 font-semibold">Xóa?</span>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(att.id)}
+                                className="text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded hover:bg-rose-700 font-bold"
+                              >
+                                Có
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded hover:bg-slate-300"
+                              >
+                                Hủy
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(att.id)}
+                              className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                              title="Xóa tệp"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )
                         )}
                       </div>
                     </div>
