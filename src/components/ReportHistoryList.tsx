@@ -15,7 +15,6 @@ import {
   Printer,
   Upload,
   HardDriveDownload,
-  Share2,
 } from 'lucide-react';
 import { ReportData, UserRole } from '../types';
 import { exportReportToDocx } from '../services/exportDocx';
@@ -166,17 +165,6 @@ export const ReportHistoryList: React.FC<ReportHistoryListProps> = ({
               <span>+ Lập biên bản tháng mới</span>
             </button>
           )}
-        </div>
-      </div>
-
-      {/* Sync tip banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2.5 text-xs text-blue-900">
-        <Share2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-        <div className="space-y-0.5">
-          <p className="font-bold">Đồng bộ giữa nhiều máy tính:</p>
-          <p className="text-blue-700">
-            Nếu bạn đã tạo biên bản trên máy tính này và muốn máy khác cũng xem được: Nhấn nút <strong>"Sao lưu {reports.length} biên bản (Xuất file)"</strong>, sau đó sang máy tính khác mở ứng dụng và chọn <strong>"Nhập dữ liệu"</strong> để đồng bộ toàn bộ ngay lập tức!
-          </p>
         </div>
       </div>
 
