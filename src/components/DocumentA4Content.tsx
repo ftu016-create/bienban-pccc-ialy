@@ -37,10 +37,10 @@ export const DocumentA4Content: React.FC<DocumentA4ContentProps> = ({
         Mẫu số PC02
       </div>
 
-      {/* Header 2 columns */}
-      <div className="grid grid-cols-2 gap-4 pb-2">
+      {/* Header 2 columns (Trái: Cơ quan ~40%, Phải: Quốc hiệu & Tiêu ngữ ~60%) */}
+      <div className="flex justify-between items-start pb-2">
         {/* Left: Organization */}
-        <div className="text-center">
+        <div className="w-[40%] text-center">
           <div className="font-bold text-[11.5pt] uppercase leading-snug">
             CÔNG TY THỦY ĐIỆN IALY
           </div>
@@ -53,14 +53,14 @@ export const DocumentA4Content: React.FC<DocumentA4ContentProps> = ({
         </div>
 
         {/* Right: Country Header */}
-        <div className="text-center">
-          <div className="font-bold text-[11.5pt] uppercase leading-snug">
+        <div className="w-[60%] text-center">
+          <div className="font-bold text-[11.5pt] uppercase leading-snug whitespace-nowrap">
             CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
           </div>
-          <div className="font-bold text-[11.5pt] underline decoration-1 underline-offset-4 leading-snug">
+          <div className="font-bold text-[11.5pt] underline decoration-1 underline-offset-4 leading-snug whitespace-nowrap">
             Độc lập - Tự do - Hạnh phúc
           </div>
-          <div className="mt-2 italic text-[12pt]">
+          <div className="mt-2 italic text-[12pt] whitespace-nowrap">
             {report.place || 'Gia Lai'}, ngày {report.header_day} tháng {report.header_month} năm {report.header_year}
           </div>
         </div>
